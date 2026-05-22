@@ -17,7 +17,11 @@
             <span class="text-lg font-bold text-emerald-600">Rp {{ formatPrice(pkg.harga) }}</span>
           </div>
         </div>
-        <div class="text-sm text-gray-600 mb-3">{{ pkg.items?.length || 0 }} pemeriksaan</div>
+        <div class="text-sm text-gray-600 mb-3 flex items-center gap-3">
+          <span>{{ pkg.items?.length || 0 }} pemeriksaan</span>
+          <span v-if="pkg.has_radiologi" class="text-xs bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full">Radiologi</span>
+          <span v-else class="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full">Tanpa Radiologi</span>
+        </div>
         <div class="flex space-x-2">
           <button @click="editPackage(pkg)" class="text-emerald-600 hover:underline text-sm">Edit</button>
           <button @click="confirmDelete(pkg)" class="text-red-600 hover:underline text-sm">Hapus</button>
@@ -40,9 +44,15 @@
           <label class="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Harga (Rp)</label>
           <BaseInput v-model.number="form.harga" type="number" min="0" required :error="fieldError(errors, 'harga')" />
         </div>
-        <div class="flex items-center space-x-2">
-          <input v-model="form.is_active" type="checkbox" id="is_active" class="rounded border-gray-300 dark:border-slate-600" />
-          <label for="is_active" class="text-sm text-gray-700 dark:text-slate-300">Aktif</label>
+        <div class="flex items-center space-x-4">
+          <div class="flex items-center space-x-2">
+            <input v-model="form.is_active" type="checkbox" id="is_active" class="rounded border-gray-300 dark:border-slate-600" />
+            <label for="is_active" class="text-sm text-gray-700 dark:text-slate-300">Aktif</label>
+          </div>
+          <div class="flex items-center space-x-2">
+            <input v-model="form.has_radiologi" type="checkbox" id="has_radiologi" class="rounded border-gray-300 dark:border-slate-600" />
+            <label for="has_radiologi" class="text-sm text-gray-700 dark:text-slate-300">Butuh Radiologi</label>
+          </div>
         </div>
         <div>
           <label class="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">Daftar Pemeriksaan</label>
@@ -89,13 +99,13 @@ const editing = ref(null)
 const saving = ref(false)
 const formError = ref('')
 const errors = ref({})
-const form = reactive({ nama_paket: '', deskripsi: '', harga: 0, is_active: true, items: [] })
+const form = reactive({ nama_paket: '', deskripsi: '', harga: 0, is_active: true, has_radiologi: false, items: [] })
 
 function formatPrice(p) { return new Intl.NumberFormat('id-ID').format(p) }
 
 function openForm() {
   editing.value = null
-  form.nama_paket = ''; form.deskripsi = ''; form.harga = 0; form.is_active = true; form.items = []
+  form.nama_paket = ''; form.deskripsi = ''; form.harga = 0; form.is_active = true; form.has_radiologi = false; form.items = []
   showForm.value = true
 }
 
@@ -105,6 +115,7 @@ function editPackage(pkg) {
   form.deskripsi = pkg.deskripsi
   form.harga = pkg.harga
   form.is_active = pkg.is_active
+  form.has_radiologi = pkg.has_radiologi ?? false
   form.items = pkg.items?.map(i => ({ nama_pemeriksaan: i.nama_pemeriksaan, satuan: i.satuan || '', nilai_normal: i.nilai_normal || '' })) || []
   showForm.value = true
 }

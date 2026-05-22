@@ -8,6 +8,7 @@ use App\Http\Resources\McuRegistrationResource;
 use App\Models\ActivityLog;
 use App\Models\McuRegistration;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Maatwebsite\Excel\Facades\Excel;
@@ -149,14 +150,18 @@ class RegistrationController extends Controller
         $rejected = McuRegistration::where('status', 'rejected')->count();
 
         // Monthly registrations (last 12 months)
-        $monthly = McuRegistration::selectRaw('YEAR(created_at) as year, MONTH(created_at) as month, COUNT(*) as total')
+        $driver = DB::connection()->getDriverName();
+        $yearExpr = $driver === 'sqlite' ? "strftime('%Y', created_at)" : 'YEAR(created_at)';
+        $monthExpr = $driver === 'sqlite' ? "strftime('%m', created_at)" : 'MONTH(created_at)';
+
+        $monthly = McuRegistration::selectRaw("{$yearExpr} as year, {$monthExpr} as month, COUNT(*) as total")
             ->where('created_at', '>=', now()->subMonths(12))
             ->groupBy('year', 'month')
             ->orderBy('year', 'asc')
             ->orderBy('month', 'asc')
             ->get()
             ->map(function ($item) {
-                $date = Carbon::create($item->year, $item->month, 1);
+                $date = Carbon::create((int) $item->year, (int) $item->month, 1);
 
                 return [
                     'bulan' => $date->locale('id')->isoFormat('MMMM YYYY'),

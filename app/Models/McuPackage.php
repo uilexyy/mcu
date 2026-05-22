@@ -23,6 +23,7 @@ class McuPackage extends Model
         'deskripsi',
         'harga',
         'is_active',
+        'has_radiologi',
     ];
 
     /**
@@ -35,6 +36,7 @@ class McuPackage extends Model
         return [
             'harga' => 'decimal:2',
             'is_active' => 'boolean',
+            'has_radiologi' => 'boolean',
         ];
     }
 

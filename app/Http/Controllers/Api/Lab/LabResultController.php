@@ -7,6 +7,7 @@ use App\Http\Requests\Lab\StoreLabResultsRequest;
 use App\Http\Resources\McuRegistrationResource;
 use App\Models\ActivityLog;
 use App\Models\McuRegistration;
+use App\Services\McuPdfService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
@@ -90,6 +91,10 @@ class LabResultController extends Controller
             }
         });
 
+        if ($registration->status === 'lab_done' && ! $registration->package->has_radiologi) {
+            app(McuPdfService::class)->generate($registration->fresh());
+        }
+
         ActivityLog::create([
             'user_id' => $request->user()->id,
             'model_type' => McuRegistration::class,
@@ -102,7 +107,7 @@ class LabResultController extends Controller
         return response()->json([
             'message' => 'Hasil laboratorium berhasil disimpan',
             'data' => new McuRegistrationResource($registration->load(['user', 'package', 'labResults.item', 'labResults.labUser'])),
-        ]);
+        ], 201);
     }
 
     public function update(StoreLabResultsRequest $request, $id): JsonResponse

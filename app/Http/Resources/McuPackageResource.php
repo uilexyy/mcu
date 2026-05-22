@@ -15,6 +15,7 @@ class McuPackageResource extends JsonResource
             'deskripsi' => $this->deskripsi,
             'harga' => (float) $this->harga,
             'is_active' => $this->is_active,
+            'has_radiologi' => $this->has_radiologi,
             'items' => McuPackageItemResource::collection($this->whenLoaded('items')),
             'created_at' => $this->created_at,
         ];

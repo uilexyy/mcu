@@ -26,6 +26,7 @@ class User extends Authenticatable
         'name',
         'gelar_depan',
         'gelar_belakang',
+        'sip',
         'email',
         'password',
         'nip',

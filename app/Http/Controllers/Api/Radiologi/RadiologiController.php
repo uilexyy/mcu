@@ -8,6 +8,7 @@ use App\Http\Resources\McuRegistrationResource;
 use App\Models\ActivityLog;
 use App\Models\McuRegistration;
 use App\Models\McuResult;
+use App\Services\McuPdfService;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -94,8 +95,7 @@ class RadiologiController extends Controller
 
             $registration->update(['status' => 'radiology_done']);
 
-            // Auto-generate PDF
-            $this->generatePdf($registration);
+            app(McuPdfService::class)->generate($registration);
 
             return $registration;
         });
@@ -157,7 +157,7 @@ class RadiologiController extends Controller
 
             // Delete old PDF result so it regenerates
             $registration->result()?->delete();
-            $this->generatePdf($registration);
+            app(McuPdfService::class)->generate($registration);
 
             return $registration;
         });
@@ -189,28 +189,6 @@ class RadiologiController extends Controller
 
     private function generatePdf(McuRegistration $registration): void
     {
-        $registration->load([
-            'user', 'package.items', 'physicalExam.doctor',
-            'labResults.item', 'labResults.labUser',
-            'radiologyResult.radioUser',
-        ]);
-
-        $result = McuResult::updateOrCreate(
-            ['registration_id' => $registration->id],
-            ['generated_at' => now()]
-        );
-
-        $pdf = Pdf::loadView('pdf.mcu-result', [
-            'registration' => $registration,
-            'result' => $result,
-        ]);
-
-        $filename = 'mcu-'.$registration->id.'-'.time().'.pdf';
-        $path = 'pdf/'.$filename;
-        Storage::disk('public')->put($path, $pdf->output());
-
-        $result->update(['pdf_path' => $path]);
-
-        $registration->update(['status' => 'completed']);
+        app(McuPdfService::class)->generate($registration);
     }
 }
