@@ -1,4 +1,4 @@
-# MCU — RS Juwita Medical Check Up Management System
+# MCU — RS Medical Check Up Management System
 
 Sistem informasi Medical Check Up berbasis **Laravel 12 API** + **Vue 3 SPA**. Mengelola alur MCU dari pendaftaran karyawan hingga hasil akhir dalam format PDF.
 
