@@ -36,7 +36,8 @@
                 <span class="px-2 py-0.5 rounded-full text-xs font-medium bg-emerald-100 dark:bg-emerald-900/30 text-emerald-800 dark:text-emerald-300 capitalize">{{ u.role.replace('_', ' ') }}</span>
               </td>
               <td class="px-6 py-4 text-gray-500 dark:text-slate-400">{{ u.nip || '-' }}</td>
-              <td class="px-6 py-4">
+              <td class="px-6 py-4 flex gap-3">
+                <button @click="openForm(u)" class="text-emerald-600 hover:text-emerald-700 text-sm font-medium">Edit</button>
                 <button @click="confirmDelete(u)" class="text-red-600 hover:text-red-700 text-sm font-medium">Hapus</button>
               </td>
             </tr>
@@ -47,7 +48,7 @@
       <Pagination :meta="pagination" @page-change="page = $event; fetchUsers()" />
     </BaseCard>
 
-    <Modal :show="showForm" title="Tambah User" size="lg" @close="showForm = false">
+    <Modal :show="showForm" :title="editing ? 'Edit User' : 'Tambah User'" size="lg" @close="showForm = false">
       <form @submit.prevent="saveUser" class="space-y-3">
         <div class="grid grid-cols-3 gap-2">
           <BaseInput v-model="form.gelar_depan" label="Gelar Depan" placeholder="dr." :error="fieldError(fieldErrors, 'gelar_depan')" />
@@ -55,7 +56,7 @@
           <BaseInput v-model="form.gelar_belakang" label="Gelar Belakang" placeholder="Sp.PD" :error="fieldError(fieldErrors, 'gelar_belakang')" />
         </div>
         <BaseInput v-model="form.email" label="Email" type="email" required :error="fieldError(fieldErrors, 'email')" />
-        <BaseInput v-model="form.password" label="Password" type="password" required minlength="8" :error="fieldError(fieldErrors, 'password')" />
+        <BaseInput v-model="form.password" label="Password" type="password" :required="!editing" minlength="8" :error="fieldError(fieldErrors, 'password')" :placeholder="editing ? 'Kosongkan jika tidak diubah' : ''" />
         <BaseSelect v-model="form.role" label="Role" required :options="formRoleOptions" :error="fieldError(fieldErrors, 'role')" />
         <BaseInput v-model="form.nip" label="NIP" :error="fieldError(fieldErrors, 'nip')" />
         <BaseInput v-model="form.departemen" label="Perusahaan" :error="fieldError(fieldErrors, 'departemen')" />
@@ -114,6 +115,7 @@ const roleOptions = [
   { value: 'dokter_umum', label: 'Dokter Umum' },
   { value: 'laboratorium', label: 'Laboratorium' },
   { value: 'radiologi', label: 'Radiologi' },
+  { value: 'karyawan', label: 'Karyawan' },
 ]
 
 const formRoleOptions = [
@@ -121,6 +123,7 @@ const formRoleOptions = [
   { value: 'laboratorium', label: 'Laboratorium' },
   { value: 'radiologi', label: 'Radiologi' },
   { value: 'admin', label: 'Admin' },
+  { value: 'karyawan', label: 'Karyawan' },
 ]
 
 function resetForm() {
@@ -129,16 +132,36 @@ function resetForm() {
   form.role = 'dokter_umum'; form.nip = ''; form.departemen = ''
 }
 
-function openForm() {
+function fillForm(user) {
+  form.name = user.name
+  form.gelar_depan = user.gelar_depan || ''
+  form.gelar_belakang = user.gelar_belakang || ''
+  form.email = user.email
+  form.password = ''
+  form.role = user.role
+  form.nip = user.nip || ''
+  form.departemen = user.departemen || ''
+}
+
+function openForm(user) {
   resetForm()
-  editing.value = null
+  if (user) {
+    editing.value = user
+    fillForm(user)
+  } else {
+    editing.value = null
+  }
   showForm.value = true
 }
 
 async function saveUser() {
   saving.value = true; formError.value = ''; fieldErrors.value = {}
   try {
-    await api.post('/admin/users', form)
+    if (editing.value) {
+      await api.put(`/admin/users/${editing.value.id}`, form)
+    } else {
+      await api.post('/admin/users', form)
+    }
     showForm.value = false
     await fetchUsers()
     resetForm()
