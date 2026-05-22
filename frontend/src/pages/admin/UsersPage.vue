@@ -60,6 +60,21 @@
         <BaseSelect v-model="form.role" label="Role" required :options="formRoleOptions" :error="fieldError(fieldErrors, 'role')" />
         <BaseInput v-model="form.nip" label="NIP" :error="fieldError(fieldErrors, 'nip')" />
         <BaseInput v-model="form.departemen" label="Perusahaan" :error="fieldError(fieldErrors, 'departemen')" />
+        <div v-if="editing && editing.role === 'dokter_umum'" class="border-t border-gray-100 pt-3 mt-3">
+          <p class="text-sm font-medium text-gray-700 mb-2">Tanda Tangan Dokter</p>
+          <div v-if="signaturePreview" class="mb-3 p-3 border border-gray-200 rounded-lg bg-white inline-block">
+            <img :src="signaturePreview" class="max-h-16" alt="Tanda tangan" />
+          </div>
+          <div class="flex items-center gap-3">
+            <label class="cursor-pointer px-3 py-1.5 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 text-xs font-medium">
+              {{ signaturePreview ? 'Ganti' : 'Unggah' }} Tanda Tangan
+              <input type="file" accept="image/png,image/jpg,image/jpeg" @change="uploadSignature" class="hidden" />
+            </label>
+            <button v-if="signaturePreview" @click="removeSignature" type="button" class="text-xs text-red-600 hover:underline">Hapus</button>
+            <p v-if="signatureUploading" class="text-xs text-emerald-600">Mengunggah...</p>
+            <p v-if="signatureError" class="text-xs text-red-500">{{ signatureError }}</p>
+          </div>
+        </div>
         <p v-if="formError" class="text-red-500 text-sm">{{ formError }}</p>
       </form>
       <template #footer>
@@ -108,6 +123,9 @@ const page = ref(1)
 const loading = ref(true)
 const pagination = ref(null)
 const form = reactive({ name: '', gelar_depan: '', gelar_belakang: '', email: '', password: '', role: 'dokter_umum', nip: '', departemen: '' })
+const signaturePreview = ref('')
+const signatureUploading = ref(false)
+const signatureError = ref('')
 
 const roleOptions = [
   { value: '', label: 'Semua Role' },
@@ -141,10 +159,13 @@ function fillForm(user) {
   form.role = user.role
   form.nip = user.nip || ''
   form.departemen = user.departemen || ''
+  signaturePreview.value = user.signature_url || ''
 }
 
 function openForm(user) {
   resetForm()
+  signaturePreview.value = ''
+  signatureError.value = ''
   if (user) {
     editing.value = user
     fillForm(user)
@@ -193,6 +214,29 @@ async function doDelete() {
   } catch (e) {
     deleteError.value = e.response?.data?.message || 'Gagal menghapus'
   } finally { saving.value = false }
+}
+
+async function uploadSignature(e) {
+  const file = e.target.files?.[0]
+  if (!file) return
+  signatureUploading.value = true
+  signatureError.value = ''
+  const fd = new FormData()
+  fd.append('signature', file)
+  try {
+    const res = await api.post(`/admin/users/${editing.value.id}/signature`, fd, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    })
+    signaturePreview.value = res.data.data.signature_url
+  } catch (e) {
+    signatureError.value = e.response?.data?.message || 'Gagal mengunggah'
+  } finally {
+    signatureUploading.value = false
+  }
+}
+
+function removeSignature() {
+  signaturePreview.value = ''
 }
 
 async function fetchUsers() {

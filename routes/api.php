@@ -49,6 +49,7 @@ Route::prefix('v1')->group(function () {
 
         Route::apiResource('/packages', PackageController::class);
         Route::apiResource('/users', UserController::class);
+        Route::post('/users/{user}/signature', [UserController::class, 'uploadSignature']);
     });
 
     // Dokter Umum

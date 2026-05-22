@@ -10,6 +10,7 @@ use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Storage;
 
 class UserController extends Controller
 {
@@ -91,6 +92,28 @@ class UserController extends Controller
 
         return response()->json([
             'message' => 'User berhasil dihapus',
+        ]);
+    }
+
+    public function uploadSignature(Request $request, $id): JsonResponse
+    {
+        $request->validate([
+            'signature' => 'required|image|mimes:png,jpg,jpeg|max:512',
+        ]);
+
+        $user = User::findOrFail($id);
+
+        if ($user->signature) {
+            Storage::disk('public')->delete($user->signature);
+        }
+
+        $path = $request->file('signature')->store('signatures', 'public');
+
+        $user->update(['signature' => $path]);
+
+        return response()->json([
+            'message' => 'Tanda tangan berhasil diunggah',
+            'data' => new UserResource($user->fresh()),
         ]);
     }
 }
