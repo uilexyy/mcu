@@ -41,7 +41,10 @@
               <td class="px-6 py-4 text-gray-500 dark:text-slate-400 text-xs whitespace-nowrap">{{ formatDate(reg.created_at) }}</td>
               <td class="px-6 py-4"><BadgeStatus :status="reg.status" /></td>
               <td class="px-6 py-4">
-                <router-link :to="`/admin/registrations/${reg.id}`" class="text-emerald-600 hover:text-emerald-700 font-medium text-sm">Detail</router-link>
+                <div class="flex items-center gap-2">
+                  <router-link :to="`/admin/registrations/${reg.id}`" class="text-emerald-600 hover:text-emerald-700 font-medium text-sm">Detail</router-link>
+                  <button v-if="reg.status === 'completed'" @click="downloadPdf(reg)" class="text-blue-600 hover:text-blue-700 font-medium text-sm">PDF</button>
+                </div>
               </td>
             </tr>
           </tbody>
@@ -85,6 +88,13 @@ const statusOptions = [
 ]
 
 function formatDate(d) { return new Date(d).toLocaleDateString('id-ID', { year: 'numeric', month: 'long', day: 'numeric' }) }
+
+async function downloadPdf(reg) {
+  try {
+    const res = await api.get(`/admin/registrations/${reg.id}/download`)
+    if (res.data.pdf_url) window.open(res.data.pdf_url, '_blank')
+  } catch (e) { console.error(e) }
+}
 
 async function exportCsv() {
   exporting.value = true

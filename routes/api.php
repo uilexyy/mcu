@@ -44,6 +44,7 @@ Route::prefix('v1')->group(function () {
         Route::get('/export/registrations', [AdminRegistrationController::class, 'export']);
         Route::put('/registrations/{id}/approve', [AdminRegistrationController::class, 'approve']);
         Route::put('/registrations/{id}/reject', [AdminRegistrationController::class, 'reject']);
+        Route::get('/registrations/{id}/download', [AdminRegistrationController::class, 'download']);
         Route::get('/stats', [AdminRegistrationController::class, 'stats']);
         Route::get('/activity-logs', [AdminRegistrationController::class, 'logs']);
 

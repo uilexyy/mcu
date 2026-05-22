@@ -7,10 +7,13 @@ use App\Http\Controllers\Controller;
 use App\Http\Resources\McuRegistrationResource;
 use App\Models\ActivityLog;
 use App\Models\McuRegistration;
+use App\Models\McuResult;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 use Maatwebsite\Excel\Facades\Excel;
 
 class RegistrationController extends Controller
@@ -50,6 +53,40 @@ class RegistrationController extends Controller
 
         return response()->json([
             'data' => new McuRegistrationResource($registration),
+        ]);
+    }
+
+    public function download($id): JsonResponse
+    {
+        $registration = McuRegistration::with([
+            'user', 'package.items', 'physicalExam.doctor',
+            'labResults.item', 'labResults.labUser',
+            'radiologyResult.radioUser',
+        ])->findOrFail($id);
+
+        if ($registration->status !== 'completed') {
+            return response()->json(['message' => 'Hasil MCU belum tersedia'], 404);
+        }
+
+        $result = McuResult::where('registration_id', $id)->firstOrFail();
+
+        if (! $result->pdf_path || ! Storage::disk('public')->exists($result->pdf_path)) {
+            $pdf = Pdf::loadView('pdf.mcu-result', [
+                'registration' => $registration,
+                'result' => $result,
+            ]);
+            $filename = 'mcu-'.$registration->id.'-'.time().'.pdf';
+            $path = 'pdf/'.$filename;
+            Storage::disk('public')->put($path, $pdf->output());
+
+            $result->update([
+                'pdf_path' => $path,
+                'generated_at' => now(),
+            ]);
+        }
+
+        return response()->json([
+            'pdf_url' => $result->pdf_url,
         ]);
     }
 
