@@ -136,6 +136,11 @@ class LabResultController extends Controller
             }
         });
 
+        if (in_array($registration->status, ['completed', 'radiology_done'])) {
+            $registration->result()?->delete();
+            app(McuPdfService::class)->generate($registration->fresh());
+        }
+
         ActivityLog::create([
             'user_id' => $request->user()->id,
             'model_type' => McuRegistration::class,

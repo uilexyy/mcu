@@ -131,8 +131,8 @@
                     @else
                         <br><br>
                     @endif
-                    <p>({{ $registration->physicalExam->doctor->nama_lengkap ?? $registration->physicalExam->doctor->name ?? '____________________' }})</p>
-                    <p style="font-size:9pt; color:#666;">{{ $registration->physicalExam->doctor->sip ?? '-' }}</p>
+                    <p>({{ $registration->physicalExam->doctor?->nama_lengkap ?? $registration->physicalExam->doctor?->name ?? '____________________' }})</p>
+                    <p style="font-size:9pt; color:#666;">{{ $registration->physicalExam->doctor?->sip ?? '-' }}</p>
                 </td>
                 <td style="width:50%">
                     <p>Jakarta, {{ $result->generated_at ? $result->generated_at->format('d F Y') : date('d F Y') }}</p>

@@ -17,6 +17,7 @@ class UserResource extends JsonResource
             'nip' => $this->nip,
             'gelar_depan' => $this->gelar_depan,
             'gelar_belakang' => $this->gelar_belakang,
+            'sip' => $this->sip,
             'nama_lengkap' => $this->nama_lengkap,
             'departemen' => $this->departemen,
             'tanggal_lahir' => $this->tanggal_lahir?->format('Y-m-d'),
